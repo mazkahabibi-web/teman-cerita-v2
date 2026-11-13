@@ -126,3 +126,35 @@ button:disabled {
     max-width: 100%;
   }
 }
+
+
+#student-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+#student-search,
+#study-program-filter {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #dce6d8;
+  border-radius: 8px;
+  background: white;
+  color: #263326;
+  font-size: 14px;
+  outline: none;
+}
+
+#student-search:focus,
+#study-program-filter:focus {
+  border-color: #174b16;
+  box-shadow: 0 0 0 2px rgba(23, 75, 22, 0.1);
+}
+
+@media (max-width: 600px) {
+  #student-filters {
+    flex-direction: column;
+  }
+}

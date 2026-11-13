@@ -88,6 +88,9 @@ onAuthStateChanged(auth, async (user) => {
 
 
 
+
+let allStudents = [];
+
 async function loadStudents() {
   studentList.textContent = 'Memuat data mahasiswa...';
 
@@ -95,70 +98,25 @@ async function loadStudents() {
     const usersRef = collection(db, 'users');
     const snapshot = await getDocs(usersRef);
 
-    studentList.innerHTML = '';
-
-    if (snapshot.empty) {
-      studentList.textContent = 'Belum ada data mahasiswa.';
-      return;
-    }
+    allStudents = [];
 
     snapshot.forEach((docSnapshot) => {
       const data = docSnapshot.data();
 
       if (!data.name || !data.studyProgram) return;
 
-      const student = document.createElement('div');
-      student.style.padding = '12px';
-      student.style.marginBottom = '12px';
-      student.style.border = '1px solid #ddd';
-      student.style.borderRadius = '8px';
-
-      const name = document.createElement('strong');
-      name.textContent = data.name;
-
-      const program = document.createElement('p');
-      program.textContent = data.studyProgram;
-
-      const button = document.createElement('button');
-      button.textContent = 'Lihat Riwayat Percakapan';
-
-      const history = document.createElement('div');
-      history.hidden = true;
-      history.style.marginTop = '12px';
-
-      button.addEventListener('click', async () => {
-        if (!history.hidden) {
-          history.hidden = true;
-          button.textContent = 'Lihat Riwayat Percakapan';
-          return;
-        }
-
-        history.hidden = false;
-
-        if (history.dataset.loaded === 'true') {
-          button.textContent = 'Tutup Riwayat Percakapan';
-          return;
-        }
-
-        button.textContent = 'Memuat...';
-        history.textContent = 'Memuat riwayat percakapan...';
-
-        await loadConversationHistory(
-          docSnapshot.id,
-          history
-        );
-
-        history.dataset.loaded = 'true';
-        button.textContent = 'Tutup Riwayat Percakapan';
+      allStudents.push({
+        id: docSnapshot.id,
+        ...data
       });
-
-      student.append(name, program, button, history);
-      studentList.appendChild(student);
     });
 
-    if (!studentList.children.length) {
-      studentList.textContent = 'Belum ada data mahasiswa.';
-    }
+    allStudents.sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+
+    createStudentFilters();
+    renderStudents();
 
   } catch (error) {
     console.error(error);
@@ -166,6 +124,143 @@ async function loadStudents() {
       'Gagal mengambil data mahasiswa.';
   }
 }
+
+
+function createStudentFilters() {
+  if (document.getElementById('student-filters')) return;
+
+  const filters = document.createElement('div');
+  filters.id = 'student-filters';
+
+  const search = document.createElement('input');
+  search.type = 'search';
+  search.id = 'student-search';
+  search.placeholder = 'Cari nama mahasiswa...';
+
+  const select = document.createElement('select');
+  select.id = 'study-program-filter';
+
+  const programs = [
+    'Semua Program Studi',
+    'Desain Komunikasi Visual (DKV)',
+    'Ilmu Komunikasi',
+    'Animasi',
+    'Teknik Informatika',
+    'Sistem Informasi',
+    'Film dan Televisi',
+    'Teknik Industri',
+    'Teknik Biomedis',
+    'Teknik Elektro',
+    'Manajemen',
+    'Akuntansi',
+    'Bisnis Digital',
+    'Sastra Jepang',
+    'Bahasa Inggris',
+    'Pengelolaan Perhotelan',
+    'Kesehatan Masyarakat',
+    'Kesehatan Lingkungan',
+    'Manajemen Informasi Kesehatan',
+    'Rekam Medis dan Informasi Kesehatan'
+  ];
+
+  programs.forEach((program, index) => {
+    const option = document.createElement('option');
+    option.value = index === 0 ? '' : program;
+    option.textContent = program;
+    select.appendChild(option);
+  });
+
+  search.addEventListener('input', renderStudents);
+  select.addEventListener('change', renderStudents);
+
+  filters.append(search, select);
+
+  studentList.parentNode.insertBefore(
+    filters,
+    studentList
+  );
+}
+
+
+function renderStudents() {
+  const searchInput = document.getElementById('student-search');
+  const programFilter = document.getElementById(
+    'study-program-filter'
+  );
+
+  if (!searchInput || !programFilter) return;
+
+  const keyword = searchInput.value.trim().toLowerCase();
+  const selectedProgram = programFilter.value;
+
+  const filteredStudents = allStudents.filter((student) => {
+    const matchesName = student.name
+      .toLowerCase()
+      .includes(keyword);
+
+    const matchesProgram =
+      !selectedProgram ||
+      student.studyProgram === selectedProgram;
+
+    return matchesName && matchesProgram;
+  });
+
+  studentList.innerHTML = '';
+
+  if (filteredStudents.length === 0) {
+    studentList.textContent =
+      'Mahasiswa tidak ditemukan.';
+    return;
+  }
+
+  filteredStudents.forEach((data) => {
+    const student = document.createElement('div');
+    student.style.padding = '12px';
+    student.style.marginBottom = '12px';
+    student.style.border = '1px solid #ddd';
+    student.style.borderRadius = '8px';
+
+    const name = document.createElement('strong');
+    name.textContent = data.name;
+
+    const program = document.createElement('p');
+    program.textContent = data.studyProgram;
+
+    const button = document.createElement('button');
+    button.textContent = 'Lihat Riwayat Percakapan';
+
+    const history = document.createElement('div');
+    history.hidden = true;
+    history.style.marginTop = '12px';
+
+    button.addEventListener('click', async () => {
+      if (!history.hidden) {
+        history.hidden = true;
+        button.textContent = 'Lihat Riwayat Percakapan';
+        return;
+      }
+
+      history.hidden = false;
+
+      if (history.dataset.loaded === 'true') {
+        button.textContent = 'Tutup Riwayat Percakapan';
+        return;
+      }
+
+      button.textContent = 'Memuat...';
+      history.textContent = 'Memuat riwayat percakapan...';
+
+      await loadConversationHistory(data.id, history);
+
+      history.dataset.loaded = 'true';
+      button.textContent = 'Tutup Riwayat Percakapan';
+    });
+
+    student.append(name, program, button, history);
+    studentList.appendChild(student);
+  });
+}
+
 
 
 async function loadConversationHistory(userId, container) {
