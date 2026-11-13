@@ -1,10 +1,15 @@
 
 import { initializeApp } from 'firebase/app';
+
 import {
   getAuth,
   signInAnonymously,
-  onAuthStateChanged
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut
 } from 'firebase/auth';
+
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -23,5 +28,8 @@ export const db = getFirestore(app);
 
 export {
   signInAnonymously,
-  onAuthStateChanged
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut
 };

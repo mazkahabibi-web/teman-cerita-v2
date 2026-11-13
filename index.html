@@ -1,76 +1,324 @@
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f7faf8" />
-    <meta name="description" content="Teman Cerita AI adalah ruang untuk berbagi cerita dan perasaan tanpa dihakimi." />
-    <title>Teman Cerita AI — Ruang untuk Bercerita</title>
-  </head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#174b16">
 
-  <body>
-    <div id="app">
-      <header class="header">
-        <div class="brand">
-          <div class="brand-icon">T</div>
-          <div class="brand-text">
-            <h1>Teman Cerita</h1>
-            <p>Ruang untuk bercerita</p>
+  <title>Teman Cerita AI | Advokesma Kamadiksi Udinus</title>
+
+  <meta
+    name="description"
+    content="Teman Cerita AI - Ruang aman untuk bercerita bersama Advokesma Kamadiksi Udinus."
+  >
+</head>
+
+<body>
+
+  <div id="app" class="app-shell">
+
+    <!-- =================================
+         HALAMAN IDENTITAS PENGGUNA
+    ================================== -->
+
+    <section
+      id="identity-screen"
+      class="identity-screen"
+      aria-label="Form identitas pengguna"
+    >
+
+      <div class="identity-card">
+
+        <div class="identity-logo">
+          <img
+            src="/logo-advokesma.png"
+            alt="Logo Advokesma Kamadiksi"
+          >
+        </div>
+
+        <div class="identity-heading">
+
+          <p class="welcome-label">
+            ADVOKESMA KAMADIKSI UDINUS
+          </p>
+
+          <h2>Sebelum mulai bercerita</h2>
+
+          <p>
+            Kenalan dulu, ya. Isi identitas singkat berikut
+            agar kami bisa menyapamu dengan lebih dekat.
+          </p>
+
+        </div>
+
+        <form id="identity-form" class="identity-form">
+
+          <div class="identity-field">
+
+            <label for="user-name">
+              Nama
+            </label>
+
+            <input
+              id="user-name"
+              name="name"
+              type="text"
+              placeholder="Masukkan nama kamu..."
+              maxlength="60"
+              autocomplete="name"
+              required
+            >
+
           </div>
+
+          <div class="identity-field">
+
+            <label for="user-study-program">
+              Program Studi
+            </label>
+
+            <select
+              id="user-study-program"
+              name="studyProgram"
+              required
+            >
+
+              <option value="" selected disabled>
+                Pilih program studi kamu...
+              </option>
+
+              <option value="Desain Komunikasi Visual (DKV)">
+                Desain Komunikasi Visual (DKV)
+              </option>
+
+              <option value="Ilmu Komunikasi">
+                Ilmu Komunikasi
+              </option>
+
+              <option value="Animasi">
+                Animasi
+              </option>
+
+              <option value="Teknik Informatika">
+                Teknik Informatika
+              </option>
+
+              <option value="Sistem Informasi">
+                Sistem Informasi
+              </option>
+
+              <option value="Film dan Televisi">
+                Film dan Televisi
+              </option>
+
+              <option value="Teknik Industri">
+                Teknik Industri
+              </option>
+
+              <option value="Teknik Biomedis">
+                Teknik Biomedis
+              </option>
+
+              <option value="Teknik Elektro">
+                Teknik Elektro
+              </option>
+
+              <option value="Manajemen">
+                Manajemen
+              </option>
+
+              <option value="Akuntansi">
+                Akuntansi
+              </option>
+
+              <option value="Bisnis Digital">
+                Bisnis Digital
+              </option>
+
+              <option value="Sastra Jepang">
+                Sastra Jepang
+              </option>
+
+              <option value="Bahasa Inggris">
+                Bahasa Inggris
+              </option>
+
+              <option value="Pengelolaan Perhotelan">
+                Pengelolaan Perhotelan
+              </option>
+
+              <option value="Kesehatan Masyarakat">
+                Kesehatan Masyarakat
+              </option>
+
+              <option value="Kesehatan Lingkungan">
+                Kesehatan Lingkungan
+              </option>
+
+              <option value="Manajemen Informasi Kesehatan">
+                Manajemen Informasi Kesehatan
+              </option>
+
+              <option value="Rekam Medis dan Informasi Kesehatan">
+                Rekam Medis dan Informasi Kesehatan
+              </option>
+
+            </select>
+
+          </div>
+
+          <p
+            id="identity-error"
+            class="identity-error"
+            role="alert"
+            hidden
+          ></p>
+
+          <button
+            type="submit"
+            class="identity-submit"
+          >
+            Mulai Bercerita
+          </button>
+
+        </form>
+
+        <p class="identity-note">
+          Identitas ini digunakan untuk personalisasi percakapan
+          Teman Cerita AI.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- =================================
+         HALAMAN CHAT
+         DESAIN TETAP DIPERTAHANKAN
+    ================================== -->
+
+    <main class="chat-panel">
+
+      <!-- HEADER -->
+
+      <header class="chat-header">
+
+        <div class="chat-header-identity">
+
+          <div class="chat-avatar">
+            <img
+              src="/logo-advokesma.png"
+              alt="Logo Advokesma Kamadiksi"
+            >
+          </div>
+
+          <div class="chat-header-copy">
+
+            <h1>Teman Cerita AI</h1>
+
+            <p>
+              <span class="status-dot"></span>
+              <span class="status-text">Terhubung</span>
+            </p>
+
+          </div>
+
         </div>
 
-        <div class="status">
-          <span class="status-dot"></span>
-          <span class="status-text">Menghubungkan...</span>
+        <div class="header-tag">
+          <span class="heart-icon">♡</span>
+          <span>Kamu didengarkan</span>
         </div>
+
       </header>
 
-      <main class="chat-container">
-        <section class="welcome">
-          <div class="welcome-icon">♡</div>
 
-          <p class="welcome-label">RUANG CERITA KAMU</p>
+      <!-- AREA SCROLL CHAT -->
 
-          <h2>Kamu tidak harus menghadapi semuanya sendirian.</h2>
+      <section class="chat-scroll-area">
 
-          <p class="welcome-description">
-            Tidak perlu menyusun kata-kata dengan sempurna.
-            Ceritakan saja apa yang sedang kamu rasakan.
-            Aku siap mendengarkan tanpa menghakimi.
-          </p>
-        </section>
+        <div class="chat-inner">
 
-        <section
-          id="messages"
-          class="messages"
-          aria-label="Riwayat percakapan"
-          aria-live="polite"
-        ></section>
+          <!-- WELCOME -->
+
+          <section class="welcome">
+
+            <div class="welcome-mark">
+              ♡
+            </div>
+
+            <p class="welcome-label">
+              ADVOKESMA KAMADIKSI UDINUS
+            </p>
+
+            <h2>
+              Kamu tidak harus menghadapi semuanya sendirian.
+            </h2>
+
+            <p class="welcome-description">
+              Tidak perlu menyusun kata-kata dengan sempurna.
+              Ceritakan saja apa yang sedang kamu rasakan.
+              Aku siap mendengarkan tanpa menghakimi.
+            </p>
+
+            <div class="welcome-decoration"></div>
+
+          </section>
+
+
+          <!-- PESAN CHAT -->
+
+          <section
+            id="messages"
+            class="messages"
+            aria-label="Riwayat percakapan"
+            aria-live="polite"
+          ></section>
+
+        </div>
+
+      </section>
+
+
+      <!-- FLOATING INPUT CHAT -->
+
+      <div class="floating-composer">
 
         <form id="chat-form" class="chat-form">
+
           <input
             id="message-input"
             type="text"
-            placeholder="Tuliskan ceritamu di sini..."
+            placeholder="Ketik pesan..."
             autocomplete="off"
             maxlength="4000"
             aria-label="Tulis pesan"
             required
-          />
+          >
 
-          <button type="submit" aria-label="Kirim pesan">
-            <span>↑</span>
+          <button
+            type="submit"
+            class="send-button"
+            aria-label="Kirim pesan"
+          >
+            <span>➤</span>
           </button>
+
         </form>
 
-        <div class="disclaimer">
-          <span>Teman Cerita AI</span>
-          bukan pengganti bantuan profesional.
+        <div class="floating-hint">
+          Teman Cerita AI · Ruang aman untuk bercerita
         </div>
-      </main>
-    </div>
 
-    <script type="module" src="/src/main.js"></script>
-  </body>
+      </div>
+
+    </main>
+
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+
+</body>
 </html>
