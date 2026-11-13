@@ -1,0 +1,76 @@
+
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7faf8" />
+    <meta name="description" content="Teman Cerita AI adalah ruang untuk berbagi cerita dan perasaan tanpa dihakimi." />
+    <title>Teman Cerita AI — Ruang untuk Bercerita</title>
+  </head>
+
+  <body>
+    <div id="app">
+      <header class="header">
+        <div class="brand">
+          <div class="brand-icon">T</div>
+          <div class="brand-text">
+            <h1>Teman Cerita</h1>
+            <p>Ruang untuk bercerita</p>
+          </div>
+        </div>
+
+        <div class="status">
+          <span class="status-dot"></span>
+          <span class="status-text">Menghubungkan...</span>
+        </div>
+      </header>
+
+      <main class="chat-container">
+        <section class="welcome">
+          <div class="welcome-icon">♡</div>
+
+          <p class="welcome-label">RUANG CERITA KAMU</p>
+
+          <h2>Kamu tidak harus menghadapi semuanya sendirian.</h2>
+
+          <p class="welcome-description">
+            Tidak perlu menyusun kata-kata dengan sempurna.
+            Ceritakan saja apa yang sedang kamu rasakan.
+            Aku siap mendengarkan tanpa menghakimi.
+          </p>
+        </section>
+
+        <section
+          id="messages"
+          class="messages"
+          aria-label="Riwayat percakapan"
+          aria-live="polite"
+        ></section>
+
+        <form id="chat-form" class="chat-form">
+          <input
+            id="message-input"
+            type="text"
+            placeholder="Tuliskan ceritamu di sini..."
+            autocomplete="off"
+            maxlength="4000"
+            aria-label="Tulis pesan"
+            required
+          />
+
+          <button type="submit" aria-label="Kirim pesan">
+            <span>↑</span>
+          </button>
+        </form>
+
+        <div class="disclaimer">
+          <span>Teman Cerita AI</span>
+          bukan pengganti bantuan profesional.
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
