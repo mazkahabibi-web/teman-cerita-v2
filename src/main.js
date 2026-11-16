@@ -4,7 +4,8 @@ import './style.css';
 import {
   auth,
   signInAnonymously,
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from './firebase';
 
 import {
@@ -14,6 +15,11 @@ import {
   getUserProfile,
   createUserProfile
 } from './database';
+
+import {
+  syncProfileToSheets,
+  syncMessageToSheets
+} from './sheets-sync';
 
 
 /* =================================
@@ -214,6 +220,9 @@ identityForm.addEventListener('submit', async (event) => {
       profile
     );
 
+    // Salin profil ke Google Sheets (asinkron, data utama tetap di Firestore)
+    syncProfileToSheets(currentUser, userProfile);
+
     hideIdentity();
 
     scrollToLatest('auto');
@@ -393,6 +402,23 @@ onAuthStateChanged(auth, async (user) => {
       return;
     }
 
+    // Jika user bukan anonim (misalnya Google login admin),
+    // sign out terlebih dahulu agar mahasiswa mendapat UID anonim sendiri.
+    if (!user.isAnonymous) {
+      console.log(
+        'Terdeteksi sesi non-anonim di halaman mahasiswa.',
+        'Sign out terlebih dahulu...'
+      );
+
+      isReady = false;
+
+      await signOut(auth);
+
+      // onAuthStateChanged akan terpanggil kembali
+      // dengan user = null, lalu signInAnonymously dipanggil.
+      return;
+    }
+
     if (
       currentUser?.uid === user.uid &&
       isReady
@@ -447,7 +473,7 @@ form.addEventListener('submit', async (event) => {
 
   try {
     // Simpan pesan pengguna
-    await saveMessage(
+    const userMessageId = await saveMessage(
       currentUser.uid,
       conversationId,
       'user',
@@ -455,6 +481,17 @@ form.addEventListener('submit', async (event) => {
     );
 
     userMessageSaved = true;
+
+    // Salin pesan pengguna ke Google Sheets (asinkron)
+    syncMessageToSheets(currentUser, {
+      conversationId,
+      messageId: userMessageId,
+      sender: 'user',
+      content,
+      studentName: userProfile?.name,
+      studyProgram: userProfile?.studyProgram,
+      timestamp: new Date().toISOString()
+    });
 
     addMessage(content, 'user');
 
@@ -466,12 +503,23 @@ form.addEventListener('submit', async (event) => {
     const reply = await sendToGemini(content);
 
     // Simpan jawaban Gemini
-    await saveMessage(
+    const assistantMessageId = await saveMessage(
       currentUser.uid,
       conversationId,
       'assistant',
       reply
     );
+
+    // Salin jawaban Gemini ke Google Sheets (asinkron)
+    syncMessageToSheets(currentUser, {
+      conversationId,
+      messageId: assistantMessageId,
+      sender: 'assistant',
+      content: reply,
+      studentName: userProfile?.name,
+      studyProgram: userProfile?.studyProgram,
+      timestamp: new Date().toISOString()
+    });
 
     addMessage(reply, 'assistant');
 

@@ -111,12 +111,14 @@ export async function saveMessage(
 
   lastMessageTime = orderTime;
 
-  await addDoc(messagesRef, {
+  const docRef = await addDoc(messagesRef, {
     sender,
     content,
     orderTime,
     timestamp: serverTimestamp()
   });
+
+  return docRef.id;
 }
 
 // Mengambil riwayat percakapan
