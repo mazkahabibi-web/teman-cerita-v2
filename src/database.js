@@ -13,59 +13,103 @@ import { db } from './firebase';
 
 let lastMessageTime = 0;
 
-// Mengambil profil mahasiswa dari Firestore
-export async function getUserProfile(userId) {
+// Mengambil profil dan memeriksa ikatan perangkat
+export async function getUserProfile(userId, deviceId) {
   const userRef = doc(db, 'users', userId);
-  const snapshot = await getDoc(userRef);
+  const userSnapshot = await getDoc(userRef);
 
-  if (!snapshot.exists()) {
-    return null;
+  if (!userSnapshot.exists()) return null;
+
+  const data = userSnapshot.data();
+
+  if (!data.name || !data.studyProgram || !data.deviceId) {
+    throw new Error('PROFILE_DEVICE_NOT_REGISTERED');
   }
 
-  const data = snapshot.data();
+  if (data.deviceId !== deviceId) {
+    throw new Error('DEVICE_MISMATCH');
+  }
 
-  if (!data.name || !data.studyProgram) {
-    return null;
+  const deviceRef = doc(db, 'devices', deviceId);
+  const deviceSnapshot = await getDoc(deviceRef);
+
+  if (
+    !deviceSnapshot.exists() ||
+    deviceSnapshot.data().uid !== userId
+  ) {
+    throw new Error('DEVICE_NOT_AUTHORIZED');
   }
 
   return {
     name: data.name,
-    studyProgram: data.studyProgram
+    studyProgram: data.studyProgram,
+    deviceId: data.deviceId
   };
 }
 
-// Menyimpan profil satu kali
-export async function createUserProfile(userId, profile) {
+// Membuat profil dan mengikat perangkat secara atomik
+export async function createUserProfile(userId, profile, deviceId) {
+  if (!deviceId) {
+    throw new Error('DEVICE_ID_MISSING');
+  }
+
   const userRef = doc(db, 'users', userId);
+  const deviceRef = doc(db, 'devices', deviceId);
 
   return await runTransaction(db, async (transaction) => {
-    const snapshot = await transaction.get(userRef);
+    const userSnapshot = await transaction.get(userRef);
+    const deviceSnapshot = await transaction.get(deviceRef);
 
-    // Jika profil sudah ada, gunakan data lama
-    if (snapshot.exists()) {
-      const data = snapshot.data();
+    // Akun sudah memiliki profil
+    if (userSnapshot.exists()) {
+      const data = userSnapshot.data();
 
-      if (!data.name || !data.studyProgram) {
-        throw new Error('Profil sudah ada tetapi datanya tidak lengkap.');
+      if (data.deviceId !== deviceId) {
+        throw new Error('DEVICE_MISMATCH');
+      }
+
+      if (
+        !deviceSnapshot.exists() ||
+        deviceSnapshot.data().uid !== userId
+      ) {
+        throw new Error('DEVICE_NOT_AUTHORIZED');
       }
 
       return {
         name: data.name,
-        studyProgram: data.studyProgram
+        studyProgram: data.studyProgram,
+        deviceId: data.deviceId
       };
     }
 
-    const newProfile = {
-      name: String(profile.name).trim(),
-      studyProgram: String(profile.studyProgram).trim(),
-      createdAt: serverTimestamp()
-    };
+    // Perangkat sudah terikat dengan akun lain
+    if (deviceSnapshot.exists()) {
+      throw new Error('DEVICE_ALREADY_REGISTERED');
+    }
 
-    transaction.set(userRef, newProfile);
+    const name = String(profile.name || '').trim();
+    const studyProgram = String(profile.studyProgram || '').trim();
+
+    if (!name || !studyProgram) {
+      throw new Error('PROFILE_INVALID');
+    }
+
+    transaction.set(deviceRef, {
+      uid: userId,
+      registeredAt: serverTimestamp()
+    });
+
+    transaction.set(userRef, {
+      name,
+      studyProgram,
+      deviceId,
+      createdAt: serverTimestamp()
+    });
 
     return {
-      name: newProfile.name,
-      studyProgram: newProfile.studyProgram
+      name,
+      studyProgram,
+      deviceId
     };
   });
 }

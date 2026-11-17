@@ -64,6 +64,24 @@ let isReady = false;
 let isSending = false;
 
 
+
+const DEVICE_STORAGE_KEY = 'teman_cerita_device_id';
+
+function getDeviceId() {
+  let deviceId = localStorage.getItem(DEVICE_STORAGE_KEY);
+
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    localStorage.setItem(DEVICE_STORAGE_KEY, deviceId);
+  }
+
+  return deviceId;
+}
+
+const deviceId = getDeviceId();
+
+
+
 /* =================================
    4. STATUS CHAT
 ================================= */
@@ -103,62 +121,71 @@ function hideIdentity() {
 }
 
 
+function getDeviceErrorMessage(error) {
+  const code = error?.message || error?.code || '';
+
+  const messages = {
+    DEVICE_MISMATCH:
+      'Akun ini sudah terikat dengan perangkat lain. Silakan hubungi admin untuk bantuan.',
+
+    DEVICE_NOT_AUTHORIZED:
+      'Perangkat ini tidak berhasil diverifikasi. Silakan hubungi admin.',
+
+    DEVICE_ALREADY_REGISTERED:
+      'Perangkat ini sudah terdaftar menggunakan akun mahasiswa lain.',
+
+    PROFILE_DEVICE_NOT_REGISTERED:
+      'Akun ini belum memiliki ikatan perangkat yang valid. Silakan hubungi admin.',
+
+    DEVICE_ID_MISSING:
+      'ID perangkat tidak ditemukan. Silakan muat ulang aplikasi.',
+
+    PROFILE_INVALID:
+      'Nama dan program studi wajib diisi.'
+  };
+
+  return messages[code] || null;
+}
+
+function showIdentityError(message, blocked = false) {
+  if (identityError) {
+    identityError.textContent = message;
+    identityError.hidden = false;
+  }
+
+  showIdentity();
+
+  const submitButton = identityForm?.querySelector(
+    'button[type="submit"]'
+  );
+
+  if (submitButton) {
+    submitButton.disabled = blocked;
+  }
+}
+
+
 /* =================================
    6. MEMUAT PROFIL MAHASISWA
 ================================= */
 
+
 async function loadUserProfile(user) {
-  // Periksa profil di Firestore
-  const savedProfile = await getUserProfile(user.uid);
+  const savedProfile = await getUserProfile(
+    user.uid,
+    deviceId
+  );
 
   if (savedProfile) {
     userProfile = savedProfile;
-
     hideIdentity();
-
-    // Hapus salinan profil lama di browser jika ada
-    localStorage.removeItem(`profile_${user.uid}`);
-
-    console.log('Profil ditemukan di Firestore.');
-
     return;
   }
 
-  // Migrasi profil lama dari localStorage
-  const storageKey = `profile_${user.uid}`;
-  const oldProfile = localStorage.getItem(storageKey);
-
-  if (oldProfile) {
-    try {
-      const parsedProfile = JSON.parse(oldProfile);
-
-      if (
-        parsedProfile.name &&
-        parsedProfile.studyProgram
-      ) {
-        userProfile = await createUserProfile(
-          user.uid,
-          parsedProfile
-        );
-
-        localStorage.removeItem(storageKey);
-
-        hideIdentity();
-
-        console.log('Profil lama berhasil dipindahkan.');
-
-        return;
-      }
-    } catch (error) {
-      console.error('Profile migration error:', error);
-    }
-  }
-
-  // Jika belum mempunyai profil
   userProfile = null;
-
   showIdentity();
 }
+
 
 
 /* =================================
@@ -217,8 +244,13 @@ identityForm.addEventListener('submit', async (event) => {
     // Simpan profil ke Firestore
     userProfile = await createUserProfile(
       currentUser.uid,
-      profile
+      profile,
+      deviceId
     );
+
+    await startConversation(currentUser);
+
+    isReady = true;
 
     // Salin profil ke Google Sheets (asinkron, data utama tetap di Firestore)
     syncProfileToSheets(currentUser, userProfile);
@@ -229,13 +261,28 @@ identityForm.addEventListener('submit', async (event) => {
 
     console.log('Profil berhasil disimpan.');
 
-  } catch (error) {
-    console.error('Profile save error:', error);
+  
+} catch (error) {
+  console.error('Profile save error:', error);
 
-    identityError.textContent =
-      'Identitas gagal disimpan. Silakan coba lagi.';
+  const deviceError = getDeviceErrorMessage(error);
 
-    identityError.hidden = false;
+  if (deviceError) {
+    showIdentityError(
+      deviceError,
+      error.message !== 'PROFILE_INVALID'
+    );
+  } else if (userProfile) {
+    showIdentityError(
+      'Profil berhasil disimpan, tetapi percakapan gagal dimuat. Silakan muat ulang halaman.',
+      true
+    );
+  } else {
+    showIdentityError(
+      'Identitas gagal disimpan. Periksa koneksi internet dan coba lagi.'
+    );
+  }
+
 
   } finally {
     if (submitButton) {
@@ -283,9 +330,8 @@ function addMessage(content, sender) {
    10. INISIALISASI CHAT
 ================================= */
 
-async function initializeChat(user) {
-  currentUser = user;
 
+async function startConversation(user) {
   const storageKey = `conversation_${user.uid}`;
 
   conversationId = localStorage.getItem(storageKey);
@@ -306,30 +352,19 @@ async function initializeChat(user) {
 
   messages.innerHTML = '';
 
-  conversationHistory = history.map((message) => ({
+  conversationHistory = history.map(message => ({
     sender: message.sender,
     content: message.content
   }));
 
-  history.forEach((message) => {
+  history.forEach(message => {
     const element = document.createElement('div');
 
-    element.classList.add(
-      'message',
-      message.sender
-    );
-
+    element.classList.add('message', message.sender);
     element.textContent = message.content;
 
     messages.appendChild(element);
   });
-
-  // Ambil profil dari Firestore
-  await loadUserProfile(user);
-
-  isReady = true;
-
-  setStatus('Terhubung', true);
 
   scrollToLatest('auto');
 
@@ -337,6 +372,27 @@ async function initializeChat(user) {
   console.log('UID:', user.uid);
   console.log('Conversation:', conversationId);
 }
+
+async function initializeChat(user) {
+  currentUser = user;
+
+  conversationId = null;
+  userProfile = null;
+
+  await loadUserProfile(user);
+
+  if (!userProfile) {
+    isReady = true;
+    setStatus('Menunggu pendaftaran');
+    return;
+  }
+
+  await startConversation(user);
+
+  isReady = true;
+  setStatus('Terhubung', true);
+}
+
 
 
 /* =================================
@@ -432,12 +488,25 @@ onAuthStateChanged(auth, async (user) => {
 
     await initializeChat(user);
 
+  
   } catch (error) {
     console.error('Initialization error:', error);
 
     isReady = false;
+    conversationId = null;
+    userProfile = null;
 
-    setStatus('Gagal memuat');
+    const deviceError = getDeviceErrorMessage(error);
+
+    if (deviceError) {
+      showIdentityError(deviceError, true);
+      setStatus('Perangkat tidak terverifikasi');
+    } else {
+      showIdentityError(
+        'Aplikasi gagal terhubung ke server. Silakan muat ulang halaman.'
+      );
+      setStatus('Gagal memuat');
+    }
   }
 });
 
