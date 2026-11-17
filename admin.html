@@ -20,7 +20,10 @@
     <button id="logout" hidden>Logout</button>
 
     <section id="dashboard" hidden>
-      <h2>Daftar Mahasiswa</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+        <h2 style="margin: 0;">Daftar Mahasiswa</h2>
+        <button id="refresh-students" type="button" style="background: #2e7d32; font-size: 13px; padding: 6px 14px;">🔄 Segarkan Data</button>
+      </div>
       <div id="student-list"></div>
     </section>
   </div>
